@@ -3,6 +3,8 @@
 import collections
 import pandas as pd
 
+SIZE_LIMIT = 1000
+
 conflicts = pd.read_csv('conflicts.csv')
 conflicts = conflicts.groupby('# Paper ID')['Reviewer Email'].apply(','.join).reset_index()
 conflicts.columns = ['id', 'emails']
@@ -69,7 +71,7 @@ def assign_everyone_to_breakout_room():
     names = [line.split(',')[0] for line in lines]
     names = [name for name in names if name not in ignored]
     n_unique_reviewer_names = len(set(names))
-    n_extra_space = 200 - n_unique_reviewer_names
+    n_extra_space = SIZE_LIMIT - n_unique_reviewer_names
     written_names = set()
     lines_written = 0
 
@@ -115,13 +117,15 @@ def write_conflict_assignment_of_paper(paper_id):
 
         conflicted_reviewer_names = conflicted_reviewer_names - ignored
 
-        n_extra_space = 200 - len(set(conflicted_reviewer_names))
+        n_extra_space = SIZE_LIMIT - len(set(conflicted_reviewer_names))
         written_names = set()
 
         # now write the conflicted reviewers to the Conflict Room
         for line in lines[::-1]:
             name, email = line.split(',')
             if name not in conflicted_reviewer_names:
+                print('Discussion Room,{}'.format(email), file=f)
+                lines_written += 1
                 continue
 
             if name in written_names and n_extra_space <= 0:
